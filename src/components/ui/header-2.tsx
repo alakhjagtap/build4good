@@ -56,7 +56,7 @@ export function Header({ onAuthAction }: { onAuthAction?: () => void }) {
 				)}
 			>
 				<div className="font-mono text-white text-xl font-bold tracking-widest italic transform -skew-x-12">
-					EMERSA
+					IMMERSA
 				</div>
 				<div className="hidden items-center gap-2 md:flex">
 					{links.map((link, i) => (

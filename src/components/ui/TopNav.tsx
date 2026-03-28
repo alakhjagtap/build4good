@@ -37,7 +37,7 @@ export default function TopNav() {
             </div>
             <div className="min-w-0">
               <h1 className="text-sm md:text-base font-semibold text-white tracking-tight">
-                Emersa
+                Immersa
               </h1>
               <p className="text-[11px] text-indigo-200/70 -mt-0.5 truncate">
                 Interactive AI Calculus 3 Studio

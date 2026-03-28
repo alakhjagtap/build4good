@@ -101,11 +101,8 @@ export function Dashboard({ onChemistry }: { onChemistry: () => void }) {
       <aside className="relative z-10 flex w-64 shrink-0 flex-col border-r border-white/10 bg-black/50 backdrop-blur-md">
         <div className="mb-10 px-6 pt-6">
           <div className="font-mono text-xl font-bold tracking-widest text-white italic transform -skew-x-12">
-            EMERSA
+            IMMERSA
           </div>
-          <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-zinc-600">
-            Console
-          </p>
         </div>
 
         <nav className="flex flex-col gap-1 px-4">
@@ -130,7 +127,7 @@ export function Dashboard({ onChemistry }: { onChemistry: () => void }) {
           <div className="flex items-center gap-2 font-mono text-[9px] text-zinc-600">
             <span className="opacity-70">∞</span>
             <div className="h-px flex-1 bg-white/10" />
-            <span>EMERSA.ENGINE_V1</span>
+            <span>IMMERSA.ENGINE_V1</span>
           </div>
         </div>
       </aside>
@@ -216,7 +213,7 @@ export function Dashboard({ onChemistry }: { onChemistry: () => void }) {
               {/* Latest session — featured panel */}
               <Card className="overflow-hidden border-white/15 bg-gradient-to-b from-white/[0.04] to-transparent">
                 <div className="relative border-b border-white/10 px-6 py-4">
-                  <div className="absolute left-0 top-0 h-full w-1 emersa-dither-rail opacity-50" />
+                  <div className="absolute left-0 top-0 h-full w-1 immersa-dither-rail opacity-50" />
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">

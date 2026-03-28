@@ -197,7 +197,7 @@ export default function AnimationPage({ onStartClick }: { onStartClick?: () => v
             <div className="hidden lg:flex items-center gap-2 mt-6 opacity-40">
               <span className="text-white text-[9px] font-mono">∞</span>
               <div className="flex-1 h-px bg-white"></div>
-              <span className="text-white text-[9px] font-mono">EMERSA.ENGINE_V1</span>
+              <span className="text-white text-[9px] font-mono">IMMERSA.ENGINE_V1</span>
             </div>
           </div>
         </div>

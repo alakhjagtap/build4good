@@ -4,7 +4,7 @@ import "katex/dist/katex.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Emersa — AI Calculus 3 Tutor",
+  title: "Immersa — AI Calculus 3 Tutor",
   description:
     "Interactive AI-powered platform that teaches Calculus 3 through synchronized explanation, 3D visuals, and voice interaction.",
 };

@@ -19,7 +19,7 @@ export function DashboardBackground({ className }: { className?: string }) {
       <div className="absolute inset-0 bg-[#050505]" />
       {/* Dot matrix — low contrast */}
       <div
-        className="absolute inset-0 opacity-[0.28] emersa-dot-matrix"
+        className="absolute inset-0 opacity-[0.28] immersa-dot-matrix"
         style={{
           maskImage:
             "radial-gradient(ellipse 85% 70% at 50% 45%, black 20%, transparent 72%)",
@@ -27,14 +27,14 @@ export function DashboardBackground({ className }: { className?: string }) {
       />
       {/* Faint perspective grid lines */}
       <div
-        className="absolute inset-0 opacity-[0.06] emersa-perspective-grid"
+        className="absolute inset-0 opacity-[0.06] immersa-perspective-grid"
         style={{
           maskImage:
             "radial-gradient(ellipse 100% 80% at 50% 40%, black 35%, transparent 75%)",
         }}
       />
       {/* Starfield specks — reuses landing mobile treatment rhythm */}
-      <div className="absolute inset-0 emersa-dashboard-stars opacity-[0.22]" />
+      <div className="absolute inset-0 immersa-dashboard-stars opacity-[0.22]" />
       {/* Vignette */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_120%_100%_at_50%_-10%,transparent_40%,#050505_85%)]" />
     </div>

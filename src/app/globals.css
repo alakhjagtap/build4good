@@ -67,7 +67,7 @@ canvas {
   }
 
   /* Dashboard / app shell — shared with landing “technical” motifs */
-  .emersa-dot-matrix {
+  .immersa-dot-matrix {
     background-image: radial-gradient(
       circle at 1px 1px,
       rgba(255, 255, 255, 0.11) 1px,
@@ -76,7 +76,7 @@ canvas {
     background-size: 20px 20px;
   }
 
-  .emersa-perspective-grid {
+  .immersa-perspective-grid {
     background-image:
       linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
@@ -85,7 +85,7 @@ canvas {
     transform-origin: center top;
   }
 
-  .emersa-dashboard-stars {
+  .immersa-dashboard-stars {
     background-image:
       radial-gradient(1px 1px at 18% 28%, rgba(255, 255, 255, 0.35), transparent),
       radial-gradient(1px 1px at 62% 72%, rgba(255, 255, 255, 0.25), transparent),
@@ -106,7 +106,7 @@ canvas {
       20% 80%;
   }
 
-  .emersa-dither-rail {
+  .immersa-dither-rail {
     background-image:
       repeating-linear-gradient(
         0deg,
