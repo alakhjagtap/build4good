@@ -13,6 +13,14 @@ const LIVEAVATAR_API = "https://api.liveavatar.com";
 
 const SANDBOX_AVATAR_ID = "dd73ea75-1218-4ef3-92ce-606d5f7fbc0a"; // Wayne
 
+/** Default true. Set LIVEAVATAR_SANDBOX=false in .env when your HeyGen plan should use non-sandbox / full sessions. */
+export function liveAvatarUseSandbox(): boolean {
+  const v =
+    process.env.LIVEAVATAR_SANDBOX ?? process.env.HEYGEN_SANDBOX ?? "true";
+  if (v === "false" || v === "0") return false;
+  return true;
+}
+
 function requireApiKey(): string {
   const key =
     process.env.LIVEAVATAR_API_KEY ?? process.env.HEYGEN_API_KEY;
@@ -55,7 +63,7 @@ export async function stopLiveAvatarSession(sessionId: string): Promise<void> {
 }
 
 export async function createLiveAvatarSession(
-  sandbox = true,
+  sandbox: boolean = liveAvatarUseSandbox(),
 ): Promise<LiveAvatarSession> {
   const apiKey = requireApiKey();
 

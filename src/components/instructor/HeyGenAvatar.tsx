@@ -200,6 +200,12 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
         },
       );
 
+      room.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
+        participant.trackPublications.forEach((pub) => {
+          if (pub.track) attachTrack(pub.track as RemoteTrack);
+        });
+      });
+
       room.on(RoomEvent.DataReceived, (data: Uint8Array) => {
         try {
           const evt = JSON.parse(new TextDecoder().decode(data)) as {
@@ -224,7 +230,7 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
         setSpeaking(false);
       });
 
-      await room.connect(livekit_url, livekit_token);
+      await room.connect(livekit_url, livekit_token, { autoSubscribe: true });
 
       // Attach any tracks already published before we subscribed
       room.remoteParticipants.forEach((p) => {
@@ -370,9 +376,10 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
       <audio ref={audioRef} autoPlay playsInline />
 
       {status === "fallback" && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-indigo-950/90 to-black px-6 text-center">
-          <p className="text-xs font-medium text-indigo-200/90">
-            Video avatar unavailable (session limit). Voice mode is on — speak or type as usual.
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-900 via-indigo-950 to-black px-5 text-center">
+          <div className="text-3xl font-semibold text-white/90 tracking-tight">∑</div>
+          <p className="text-[11px] font-medium text-indigo-100/95 leading-snug">
+            Live video is off (session limit or plan). Audio tutor is on — ask questions by voice.
           </p>
         </div>
       )}

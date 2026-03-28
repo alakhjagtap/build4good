@@ -19,6 +19,8 @@ import { useLessonStore } from "@/lib/lesson-engine";
 import {
   startContinuousListening,
   stopContinuousListening,
+  speak as browserSpeak,
+  cancelSpeech,
 } from "@/lib/speech";
 import type { HeyGenAvatarHandle } from "@/components/instructor/HeyGenAvatar";
 import type { DesmosHandle } from "@/components/visualization/DesmosPanel";
@@ -124,9 +126,6 @@ function Session({ onEnd }: { onEnd: () => void }) {
     isPlaying,
     voiceEnabled,
     getCurrentSegment,
-    togglePlay,
-    nextSegment,
-    prevSegment,
     recordFollowUp,
   } = useLessonStore();
 
@@ -144,7 +143,8 @@ function Session({ onEnd }: { onEnd: () => void }) {
   const visionCanvasRef = useRef<HTMLCanvasElement>(null);
   const visionLoopRef = useRef<NodeJS.Timeout | null>(null);
   const [visionMath, setVisionMath] = useState<string[]>([]);
-  const isSpeakingRef = useRef(false);
+  const [desmosReady, setDesmosReady] = useState(false);
+  const onDesmosReady = useCallback(() => setDesmosReady(true), []);
 
   useAutoPlayback();
 
@@ -169,24 +169,35 @@ function Session({ onEnd }: { onEnd: () => void }) {
     avatarRef.current?.speak(greeting);
   }, []);
 
-  // Apply Desmos state when segment changes
+  // Apply Desmos when the calculator boots or the segment changes (ref was null on first paint before).
   useEffect(() => {
-    if (!segment?.desmosState || !desmosRef.current) return;
+    if (!desmosReady || !segment?.desmosState || !desmosRef.current) return;
     desmosRef.current.applyState(segment.desmosState);
-  }, [segment]);
+  }, [desmosReady, segment]);
 
-  // Speak caption when segment changes
+  // Speak caption when segment changes (retry once so we catch LiveAvatar after connect).
   useEffect(() => {
     if (!segment || segment.id === lastSpokenId.current) return;
     lastSpokenId.current = segment.id;
-    
-    // We strictly use HeyGen to route all spoken dialogue.
-    // If the HeyGen avatar isn't connected yet, the TTS engine won't play fallback.
+
     const text = segment.captionText ?? segment.content.slice(0, 250);
-    if (avatarRef.current?.isLive()) {
-      avatarRef.current.speak(text);
-    }
-  }, [segment]);
+    const trySpeak = () => {
+      if (avatarRef.current?.isLive()) {
+        void avatarRef.current.speak(text).catch(() => {});
+        return true;
+      }
+      return false;
+    };
+
+    if (trySpeak()) return;
+    const t = window.setTimeout(() => {
+      if (trySpeak()) return;
+      if (voiceEnabled) {
+        void browserSpeak(text).catch(() => {});
+      }
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [segment, voiceEnabled]);
 
   // Send a question to the real AI tutor
   const sendQuestion = useCallback(
@@ -211,7 +222,10 @@ function Session({ onEnd }: { onEnd: () => void }) {
         }
 
         if (avatarRef.current?.isLive()) {
-          avatarRef.current.speak(reply);
+          void avatarRef.current.speak(reply);
+        } else if (voiceEnabled) {
+          cancelSpeech();
+          void browserSpeak(reply).catch(() => {});
         }
       } catch (err) {
         console.error("Tutor error:", err);
@@ -219,7 +233,7 @@ function Session({ onEnd }: { onEnd: () => void }) {
         setThinking(false);
       }
     },
-    [recordFollowUp],
+    [recordFollowUp, voiceEnabled],
   );
 
 
@@ -325,7 +339,7 @@ function Session({ onEnd }: { onEnd: () => void }) {
       
       {/* Fullscreen Graph */}
       <div className="absolute inset-0 z-0">
-        <DesmosPanel ref={desmosRef} />
+        <DesmosPanel ref={desmosRef} onReady={onDesmosReady} />
       </div>
 
       {/* Top Right Floating Avatar */}

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { createLiveAvatarSession } from "@/lib/avatar";
+import { createLiveAvatarSession, liveAvatarUseSandbox } from "@/lib/avatar";
 
 export async function POST() {
   try {
-    const session = await createLiveAvatarSession(true);
+    const session = await createLiveAvatarSession(liveAvatarUseSandbox());
 
     return NextResponse.json({
       session_id: session.sessionId,
