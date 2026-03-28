@@ -12,6 +12,13 @@ import {
   AlertCircle,
   PlayCircle,
   FlaskConical,
+  Atom,
+  Cpu,
+  Globe2,
+  Landmark,
+  Dna,
+  Sigma,
+  Brain,
 } from "lucide-react";
 import { useLessonStore } from "@/lib/lesson-engine";
 import { Button } from "@/components/ui/button";
@@ -93,6 +100,81 @@ export function Dashboard({ onChemistry }: { onChemistry: () => void }) {
     loadLesson("gradient vectors");
   };
 
+  const courses: {
+    id: string;
+    title: string;
+    subtitle: string;
+    badge?: string;
+    mono?: string;
+    Icon?: LucideIcon;
+    onClick: () => void;
+  }[] = [
+    {
+      id: "calc3",
+      title: "Calculus III",
+      subtitle: "Multivariable Functions",
+      mono: "C3",
+      onClick: startDemo,
+    },
+    {
+      id: "chem-lab",
+      title: "Chemistry",
+      subtitle: "Titration Lab · Immersive 3D",
+      badge: "New",
+      Icon: FlaskConical,
+      onClick: onChemistry,
+    },
+    {
+      id: "physics",
+      title: "Physics",
+      subtitle: "Mechanics, Energy & Waves",
+      Icon: Atom,
+      onClick: startDemo,
+    },
+    {
+      id: "cs",
+      title: "Computer Science",
+      subtitle: "Algorithms & Data Structures",
+      Icon: Cpu,
+      onClick: startDemo,
+    },
+    {
+      id: "econ",
+      title: "Economics",
+      subtitle: "Micro & Market Models",
+      Icon: Globe2,
+      onClick: startDemo,
+    },
+    {
+      id: "history",
+      title: "History",
+      subtitle: "World History & Historiography",
+      Icon: Landmark,
+      onClick: startDemo,
+    },
+    {
+      id: "bio",
+      title: "Biology",
+      subtitle: "Cell Biology & Genetics",
+      Icon: Dna,
+      onClick: startDemo,
+    },
+    {
+      id: "stats",
+      title: "Statistics",
+      subtitle: "Probability & Inference",
+      Icon: Sigma,
+      onClick: startDemo,
+    },
+    {
+      id: "psych",
+      title: "Psychology",
+      subtitle: "Cognition & Behavior",
+      Icon: Brain,
+      onClick: startDemo,
+    },
+  ];
+
   return (
     <div className="relative flex min-h-screen overflow-hidden bg-[#050505] font-sans text-zinc-100">
       <DashboardBackground />
@@ -170,7 +252,7 @@ export function Dashboard({ onChemistry }: { onChemistry: () => void }) {
                   {
                     title: "Courses",
                     icon: Users,
-                    value: "2",
+                    value: String(courses.length),
                     hint: "Active enrollments",
                   },
                   {
@@ -316,63 +398,40 @@ export function Dashboard({ onChemistry }: { onChemistry: () => void }) {
                 </p>
               </header>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-                <button
-                  type="button"
-                  onClick={startDemo}
-                  className="flex cursor-pointer items-center gap-4 border border-white/10 bg-white/[0.02] p-6 text-left transition-all hover:border-white/25 hover:bg-white/[0.04]"
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center border border-white/15 bg-black/40 font-mono text-sm font-bold text-white">
-                    C3
-                  </div>
-                  <div>
-                    <h3 className="font-mono text-sm font-bold uppercase tracking-wide text-white">
-                      Calculus III
-                    </h3>
-                    <p className="text-xs text-zinc-600">
-                      Multivariable Functions
-                    </p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onChemistry}
-                  className="group relative flex cursor-pointer items-center gap-4 overflow-hidden border border-white/10 bg-white/[0.02] p-6 text-left transition-all hover:border-white/25 hover:bg-white/[0.04]"
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center border border-white/15 bg-black/40 text-white">
-                    <FlaskConical className="h-6 w-6 stroke-[1.25]" />
-                  </div>
-                  <div>
-                    <h3 className="font-mono text-sm font-bold uppercase tracking-wide text-white">
-                      Chemistry
-                    </h3>
-                    <p className="text-xs text-zinc-600">
-                      Titration Lab · Immersive 3D
-                    </p>
-                  </div>
-                  <span className="absolute right-3 top-3 border border-white/20 bg-black/60 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-zinc-400">
-                    New
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onChemistry}
-                  className="flex cursor-pointer items-center gap-4 border border-white/10 bg-white/[0.02] p-6 text-left transition-all hover:border-white/25 hover:bg-white/[0.04]"
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center border border-white/15 bg-black/40 font-mono text-sm font-bold text-white">
-                    CH
-                  </div>
-                  <div>
-                    <h3 className="font-mono text-sm font-bold uppercase tracking-wide text-white">
-                      Introductory to Chemistry
-                    </h3>
-                    <p className="text-xs text-zinc-600">
-                      Foundations and Core Concepts
-                    </p>
-                  </div>
-                </button>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-6">
+                {courses.map((c) => {
+                  const CourseIcon = c.Icon;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={c.onClick}
+                      className={cn(
+                        "group relative flex min-h-[100px] cursor-pointer items-center gap-4 overflow-hidden border border-white/10 bg-white/[0.02] p-6 text-left transition-all hover:border-white/25 hover:bg-white/[0.04]",
+                        c.badge && "pr-14",
+                      )}
+                    >
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center border border-white/15 bg-black/40 font-mono text-sm font-bold text-white">
+                        {CourseIcon ? (
+                          <CourseIcon className="h-6 w-6 stroke-[1.25]" />
+                        ) : (
+                          c.mono
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-mono text-sm font-bold uppercase tracking-wide text-white">
+                          {c.title}
+                        </h3>
+                        <p className="mt-0.5 text-xs text-zinc-600">{c.subtitle}</p>
+                      </div>
+                      {c.badge ? (
+                        <span className="absolute right-3 top-3 border border-white/20 bg-black/60 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-zinc-400">
+                          {c.badge}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
