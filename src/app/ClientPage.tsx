@@ -24,6 +24,7 @@ import {
 } from "@/lib/speech";
 import type { HeyGenAvatarHandle } from "@/components/instructor/HeyGenAvatar";
 import type { DesmosHandle } from "@/components/visualization/DesmosPanel";
+import { cn } from "@/lib/utils";
 
 const HeyGenAvatar = dynamic(
   () => import("@/components/instructor/HeyGenAvatar"),
@@ -143,6 +144,7 @@ function Session({ onEnd }: { onEnd: () => void }) {
   const visionCanvasRef = useRef<HTMLCanvasElement>(null);
   const visionLoopRef = useRef<NodeJS.Timeout | null>(null);
   const [visionMath, setVisionMath] = useState<string[]>([]);
+  const [showGraph, setShowGraph] = useState(false);
   const [desmosReady, setDesmosReady] = useState(false);
   const onDesmosReady = useCallback(() => setDesmosReady(true), []);
 
@@ -169,11 +171,11 @@ function Session({ onEnd }: { onEnd: () => void }) {
     avatarRef.current?.speak(greeting);
   }, []);
 
-  // Apply Desmos when the calculator boots or the segment changes (ref was null on first paint before).
+  // Only apply segment state if we are actually showing the graph layout.
   useEffect(() => {
-    if (!desmosReady || !segment?.desmosState || !desmosRef.current) return;
+    if (!desmosReady || !segment?.desmosState || !desmosRef.current || !showGraph) return;
     desmosRef.current.applyState(segment.desmosState);
-  }, [desmosReady, segment]);
+  }, [desmosReady, segment, showGraph]);
 
   // Speak caption when segment changes (retry once so we catch LiveAvatar after connect).
   useEffect(() => {
@@ -208,6 +210,18 @@ function Session({ onEnd }: { onEnd: () => void }) {
       setThinking(true);
       recordFollowUp();
 
+      // Proactively show graph if user asks to see it
+      const lower = trimmed.toLowerCase();
+      if (
+        lower.includes("show me") ||
+        lower.includes("plot") ||
+        lower.includes("graph") ||
+        lower.includes("see the example") ||
+        lower.includes("visualize")
+      ) {
+        setShowGraph(true);
+      }
+
       try {
         const seg = useLessonStore.getState().getCurrentSegment();
         const lesson = useLessonStore.getState().currentLesson;
@@ -218,6 +232,7 @@ function Session({ onEnd }: { onEnd: () => void }) {
         );
 
         if (desmosState && desmosRef.current) {
+          setShowGraph(true);
           desmosRef.current.applyState(desmosState);
         }
 
@@ -243,7 +258,12 @@ function Session({ onEnd }: { onEnd: () => void }) {
     // We start listening as soon as the session begins
     setListening(true);
     startContinuousListening({
-      onInterim: (text) => setInterim(text),
+      onInterim: (text) => {
+        setInterim(text);
+        if (text.trim().length > 2 && avatarRef.current?.isSpeaking()) {
+          void avatarRef.current.interrupt();
+        }
+      },
       onFinal: (text) => {
         setInterim("");
         // Don't respond to ourselves or process multiple at once
@@ -254,7 +274,12 @@ function Session({ onEnd }: { onEnd: () => void }) {
         // Automatically restart if idle (unless the component unmounts)
         setListening(true);
         startContinuousListening({
-          onInterim: (text) => setInterim(text),
+          onInterim: (text) => {
+            setInterim(text);
+            if (text.trim().length > 2 && avatarRef.current?.isSpeaking()) {
+              void avatarRef.current.interrupt();
+            }
+          },
           onFinal: (text) => {
             setInterim("");
             void sendQuestion(text);
@@ -309,12 +334,16 @@ function Session({ onEnd }: { onEnd: () => void }) {
           if (data.equations?.length > 0) {
             const bestEqs = data.equations.filter((e) => e.confidence > 0.8).map((e) => e.latex);
             if (bestEqs.length > 0) {
-              setVisionMath((prev) => Array.from(new Set([...prev, ...bestEqs])));
-              if (desmosRef.current) {
-                desmosRef.current.applyState({
-                  commands: bestEqs.map((l, i) => ({ id: `vision-${i}`, latex: l, color: "#6366f1" })),
+                setVisionMath((prev) => {
+                  const next = Array.from(new Set([...prev, ...bestEqs]));
+                  if (desmosRef.current) {
+                    desmosRef.current.applyState({
+                      commands: next.map((l, i) => ({ id: `vision-${i}`, latex: l, color: "#6366f1" })),
+                      patch: true,
+                    });
+                  }
+                  return next;
                 });
-              }
             }
           }
         } catch (e) { /* ignore */ }
@@ -335,16 +364,33 @@ function Session({ onEnd }: { onEnd: () => void }) {
   }, [onEnd]);
 
   return (
-    <div className="relative w-full h-screen bg-white overflow-hidden font-sans">
+    <div className="relative w-full h-screen bg-black overflow-hidden font-sans">
       
-      {/* Fullscreen Graph */}
-      <div className="absolute inset-0 z-0">
+      {/* 
+        Fullscreen Graph (rendered behind avatar if showGraph is true).
+        We keep it mounted always so it doesn't have to re-inject script.
+      */}
+      <div 
+        className={cn(
+          "absolute inset-0 z-0 transition-opacity duration-1000",
+          showGraph ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+      >
         <DesmosPanel ref={desmosRef} onReady={onDesmosReady} />
       </div>
-
-      {/* Top Right Floating Avatar */}
-      <div className="absolute top-6 right-6 w-[340px] aspect-video bg-black rounded-xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200 z-10">
-        <HeyGenAvatar ref={avatarRef} onAvatarReady={handleAvatarReady} />
+      
+      {/* 
+        Avatar: PIP if graph is showing, Fullscreen otherwise.
+      */}
+      <div 
+        className={cn(
+          "absolute shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-gray-200 overflow-hidden transition-all duration-700 ease-in-out z-10 bg-black",
+          showGraph 
+            ? "top-6 right-6 w-[340px] aspect-video rounded-xl border" 
+            : "inset-0 rounded-none border-0"
+        )}
+      >
+        <HeyGenAvatar ref={avatarRef} onAvatarReady={handleAvatarReady} listening={!!interim} />
       </div>
 
       {/* Interim Listening Text Popup */}

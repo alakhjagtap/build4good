@@ -75,7 +75,11 @@ const DesmosPanel = forwardRef<DesmosHandle, DesmosPanelProps>((props, ref) => {
       if (!calc) return;
 
       const animationId = ++activeAnimationRef.current;
-      calc.setBlank();
+
+      // Only clear if we aren't patching
+      if (!state.patch) {
+        calc.setBlank();
+      }
 
       if (!state?.commands || !Array.isArray(state.commands)) return;
 

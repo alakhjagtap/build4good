@@ -46,9 +46,11 @@ const AGENT_CONTROL_TOPIC = "agent-control";
 type HeyGenAvatarProps = {
   onAvatarReady?: () => void;
   onSpeakingChange?: (isSpeaking: boolean) => void;
+  listening?: boolean;
 };
 
 const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, ref) => {
+  const { listening: isUserTalking } = props;
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const roomRef = useRef<Room | null>(null);
@@ -427,15 +429,19 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
       {(status === "connected" || status === "fallback") && (
         <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded z-10">
           <span
-            className={`w-1.5 h-1.5 rounded-full ${speaking ? "bg-green-400 animate-pulse" : "bg-amber-400 animate-pulse"}`}
+            className={`w-1.5 h-1.5 rounded-full ${isUserTalking ? "bg-blue-400 animate-bounce" : speaking ? "bg-green-400 animate-pulse" : "bg-amber-400 animate-pulse"}`}
           />
           {status === "fallback"
-            ? speaking
-              ? "SPEAKING"
-              : "VOICE"
-            : speaking
-              ? "SPEAKING"
-              : "LIVE"}
+            ? isUserTalking
+              ? "LISTENING"
+              : speaking
+                ? "SPEAKING"
+                : "VOICE"
+            : isUserTalking
+              ? "LISTENING"
+              : speaking
+                ? "SPEAKING"
+                : "LIVE"}
         </div>
       )}
     </div>

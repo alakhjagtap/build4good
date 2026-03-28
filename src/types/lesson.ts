@@ -53,6 +53,7 @@ export interface DesmosCommand {
 
 export interface DesmosSegmentState {
   commands: DesmosCommand[];
+  patch?: boolean;
 }
 
 export type LessonSegmentType =
