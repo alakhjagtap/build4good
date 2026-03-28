@@ -29,6 +29,31 @@ export type LiveAvatarSession = {
   livekitToken: string;
 };
 
+/** Best-effort: frees a LiveAvatar slot when a session is abandoned or after a failed start. */
+export async function stopLiveAvatarSession(sessionId: string): Promise<void> {
+  const apiKey = requireApiKey();
+  try {
+    const res = await fetch(`${LIVEAVATAR_API}/v1/sessions/stop`, {
+      method: "POST",
+      headers: {
+        "X-API-KEY": apiKey,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        reason: "USER_CLOSED",
+      }),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      console.warn("[LiveAvatar] stop session:", res.status, t.slice(0, 200));
+    }
+  } catch (e) {
+    console.warn("[LiveAvatar] stop session failed:", e);
+  }
+}
+
 export async function createLiveAvatarSession(
   sandbox = true,
 ): Promise<LiveAvatarSession> {
@@ -96,6 +121,8 @@ export async function createLiveAvatarSession(
     unknown
   >;
   if (!startRes.ok) {
+    // Release token/session so we don't leak concurrency slots.
+    await stopLiveAvatarSession(sessionId);
     throw new Error(
       `LiveAvatar start ${startRes.status}: ${JSON.stringify(startJson)}`,
     );

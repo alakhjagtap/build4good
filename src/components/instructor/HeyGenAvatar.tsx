@@ -18,6 +18,7 @@ import {
 } from "livekit-client";
 import { Loader2, WifiOff } from "lucide-react";
 import { prepareSpeechText } from "@/lib/latex-filter";
+import { speak as browserSpeak, cancelSpeech } from "@/lib/speech";
 
 export type HeyGenAvatarHandle = {
   isLive: () => boolean;
@@ -27,7 +28,18 @@ export type HeyGenAvatarHandle = {
   interrupt: () => Promise<void>;
 };
 
-type SessionStatus = "idle" | "connecting" | "connected" | "error" | "no-key";
+type SessionStatus =
+  | "idle"
+  | "connecting"
+  | "connected"
+  | "fallback"
+  | "error"
+  | "no-key";
+
+function isConcurrencyError(msg: string, code?: unknown): boolean {
+  if (code === 4032) return true;
+  return /4032|concurrency|Session concurrency limit/i.test(msg);
+}
 
 const AGENT_CONTROL_TOPIC = "agent-control";
 
@@ -78,6 +90,21 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
     [],
   );
 
+  const stopServerSession = useCallback(async () => {
+    const sid = sessionIdRef.current;
+    if (!sid) return;
+    try {
+      await fetch("/api/avatar/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sid }),
+      });
+    } catch {
+      /* best-effort */
+    }
+    sessionIdRef.current = "";
+  }, []);
+
   const disconnect = useCallback(async () => {
     if (roomRef.current) {
       await roomRef.current.disconnect().catch(() => {});
@@ -85,9 +112,10 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
     }
     if (videoRef.current) videoRef.current.srcObject = null;
     if (audioRef.current) audioRef.current.srcObject = null;
+    await stopServerSession();
     setStatus("idle");
     setSpeaking(false);
-  }, []);
+  }, [stopServerSession]);
 
   const connect = useCallback(async () => {
     setStatus("connecting");
@@ -115,6 +143,13 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
             : "Failed to create avatar session";
         if (/API_KEY|not configured/i.test(errText)) {
           setStatus("no-key");
+          return;
+        }
+        if (isConcurrencyError(errText, json.code)) {
+          console.warn("[LiveAvatar] concurrency limit — using voice-only fallback");
+          setStatus("fallback");
+          setErrorMsg("");
+          onAvatarReadyRef.current?.();
           return;
         }
         throw new Error(errText);
@@ -204,7 +239,19 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
     } catch (err) {
       const msg = (err as Error).message;
       console.error("[LiveAvatar] connect error:", msg);
-      setStatus(/API_KEY|not configured/i.test(msg) ? "no-key" : "error");
+      if (/API_KEY|not configured/i.test(msg)) {
+        setStatus("no-key");
+        setErrorMsg("");
+        return;
+      }
+      if (isConcurrencyError(msg, undefined)) {
+        console.warn("[LiveAvatar] concurrency — voice-only fallback");
+        setStatus("fallback");
+        setErrorMsg("");
+        onAvatarReadyRef.current?.();
+        return;
+      }
+      setStatus("error");
       setErrorMsg(msg);
       if (roomRef.current) {
         await roomRef.current.disconnect().catch(() => {});
@@ -240,9 +287,11 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
   }, [status]);
 
   useImperativeHandle(ref, () => ({
-    isLive: () => statusRef.current === "connected",
+    isLive: () =>
+      statusRef.current === "connected" || statusRef.current === "fallback",
     isSpeaking: () => speaking,
     unlockAudio: async () => {
+      if (statusRef.current === "fallback") return;
       const a = audioRef.current;
       if (a) {
         a.muted = false;
@@ -257,6 +306,21 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
     speak: async (text: string) => {
       if (!text.trim()) {
         throw new Error("Speak called with empty text");
+      }
+      if (statusRef.current === "fallback") {
+        const speechText = prepareSpeechText(text);
+        if (!speechText.trim()) {
+          throw new Error("Speech text empty after preprocessing");
+        }
+        setSpeaking(true);
+        onSpeakingChangeRef.current?.(true);
+        try {
+          await browserSpeak(speechText);
+        } finally {
+          setSpeaking(false);
+          onSpeakingChangeRef.current?.(false);
+        }
+        return;
       }
       if (statusRef.current !== "connected") {
         const beforeRetry = statusRef.current;
@@ -281,6 +345,10 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
       publishCommand("avatar.speak_text", { text: speechText });
     },
     interrupt: async () => {
+      if (statusRef.current === "fallback") {
+        cancelSpeech();
+        return;
+      }
       if (statusRef.current !== "connected") return;
       console.log("[LiveAvatar] interrupt");
       publishCommand("avatar.interrupt");
@@ -301,7 +369,15 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
       {/* Hidden audio element for avatar speech */}
       <audio ref={audioRef} autoPlay playsInline />
 
-      {status !== "connected" && (
+      {status === "fallback" && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-indigo-950/90 to-black px-6 text-center">
+          <p className="text-xs font-medium text-indigo-200/90">
+            Video avatar unavailable (session limit). Voice mode is on — speak or type as usual.
+          </p>
+        </div>
+      )}
+
+      {status !== "connected" && status !== "fallback" && (
         <div className="flex flex-col items-center gap-3 text-gray-400 px-4 text-center z-10">
           {status === "connecting" ? (
             <>
@@ -341,12 +417,18 @@ const HeyGenAvatar = forwardRef<HeyGenAvatarHandle, HeyGenAvatarProps>((props, r
         </div>
       )}
 
-      {status === "connected" && (
+      {(status === "connected" || status === "fallback") && (
         <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded z-10">
           <span
-            className={`w-1.5 h-1.5 rounded-full ${speaking ? "bg-green-400 animate-pulse" : "bg-red-500 animate-pulse"}`}
+            className={`w-1.5 h-1.5 rounded-full ${speaking ? "bg-green-400 animate-pulse" : "bg-amber-400 animate-pulse"}`}
           />
-          {speaking ? "SPEAKING" : "LIVE"}
+          {status === "fallback"
+            ? speaking
+              ? "SPEAKING"
+              : "VOICE"
+            : speaking
+              ? "SPEAKING"
+              : "LIVE"}
         </div>
       )}
     </div>
