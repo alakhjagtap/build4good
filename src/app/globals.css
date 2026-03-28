@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-surface: #0a0a0f;
+  --color-surface-50: #141420;
+  --color-surface-100: #1c1c2b;
+  --color-brand-500: #6366f1;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-surface);
+  color: #d1d5db;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.katex-display-wrapper .katex {
+  font-size: 1.05em;
+  color: #e0e7ff;
+}
+
+.katex-display-wrapper .katex .mord,
+.katex-display-wrapper .katex .mbin,
+.katex-display-wrapper .katex .mrel,
+.katex-display-wrapper .katex .mop,
+.katex-display-wrapper .katex .mpunct {
+  color: #c7d2fe;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.3);
+  color: white;
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+canvas {
+  outline: none;
+  touch-action: none;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
