@@ -3,6 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { ShaderAnimation } from "@/components/ui/shader-lines";
 import { motion, AnimatePresence } from "framer-motion";
+import { Trispace } from "next/font/google";
+
+const trispace = Trispace({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+});
 
 export function Landing({ onEnterApp }: { onEnterApp: () => void }) {
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -28,7 +34,7 @@ export function Landing({ onEnterApp }: { onEnterApp: () => void }) {
   }, [isTransitioning, onEnterApp]);
 
   return (
-    <div className="relative w-full h-screen min-h-screen bg-[#000000] overflow-hidden flex flex-col items-center justify-center font-sans text-white select-none">
+    <div className={`relative w-full h-screen min-h-screen bg-[#000000] overflow-hidden flex flex-col items-center justify-center text-white select-none ${trispace.className}`}>
       
       {/* Background Shader Cinematic Container */}
       <motion.div 
@@ -56,9 +62,9 @@ export function Landing({ onEnterApp }: { onEnterApp: () => void }) {
         
         {/* Logo Text Animation */}
         <motion.h1 
-          className="text-6xl md:text-8xl font-extrabold text-white mb-4 md:mb-6 uppercase origin-center" 
+          className="text-6xl md:text-8xl font-bold text-white mb-4 md:mb-6 uppercase origin-center" 
           style={{ textShadow: "0 4px 30px rgba(0,0,0,0.8)" }}
-          initial={{ letterSpacing: "-0.05em", scale: 1, opacity: 1, filter: "blur(0px) brightness(1)" }}
+          initial={{ letterSpacing: "0.1em", scale: 1, opacity: 1, filter: "blur(0px) brightness(1)" }}
           animate={isTransitioning ? {
             letterSpacing: "0.8em",    // Sharp horizontal stretch
             scale: 5,                  // Extreme forward push (zoom through)
@@ -66,7 +72,7 @@ export function Landing({ onEnterApp }: { onEnterApp: () => void }) {
             filter: "blur(12px) brightness(3)", // Motion blur and bloom
             y: 50 // Pull slightly down as it zooms so the camera goes 'over' center
           } : {
-            letterSpacing: "-0.05em",
+            letterSpacing: "0.1em",
             scale: 1,
             opacity: 1,
             filter: "blur(0px) brightness(1)",
@@ -79,7 +85,7 @@ export function Landing({ onEnterApp }: { onEnterApp: () => void }) {
 
         {/* Caption rapidly vanishes immediately */}
         <motion.p 
-          className="text-sm md:text-base font-medium text-gray-300 max-w-sm md:max-w-md text-center px-6 tracking-wide" 
+          className="text-sm md:text-base font-normal text-gray-300 max-w-sm md:max-w-md text-center px-6 tracking-wide" 
           style={{ textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}
           initial={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
           animate={isTransitioning ? {
@@ -119,7 +125,7 @@ export function Landing({ onEnterApp }: { onEnterApp: () => void }) {
           repeat: Infinity
         }}
       >
-        <p className="text-sm md:text-sm font-bold tracking-[0.3em] text-white uppercase" style={{ textShadow: "0 2px 10px rgba(0,0,0,1)" }}>
+        <p className="text-sm md:text-sm font-semibold tracking-[0.3em] text-white uppercase" style={{ textShadow: "0 2px 10px rgba(0,0,0,1)" }}>
           PRESS SPACE TO CONTINUE
         </p>
       </motion.div>
