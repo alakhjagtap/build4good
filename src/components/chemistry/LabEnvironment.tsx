@@ -4,25 +4,35 @@ import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-function FluorescentLight({ position }: { position: [number, number, number] }) {
+/* ── Overhead fluorescent panel ── */
+function LabLight({
+  position,
+}: {
+  position: [number, number, number];
+}) {
   return (
     <group position={position}>
       <mesh>
-        <boxGeometry args={[1.6, 0.06, 0.3]} />
-        <meshStandardMaterial color="#f8f8ff" emissive="#f0f0ff" emissiveIntensity={2} />
+        <boxGeometry args={[1.4, 0.05, 0.28]} />
+        <meshStandardMaterial
+          color="#f8f8ff"
+          emissive="#e8ecff"
+          emissiveIntensity={1.6}
+        />
       </mesh>
       <rectAreaLight
-        width={1.6}
-        height={0.3}
-        intensity={8}
-        position={[0, -0.04, 0]}
+        width={1.4}
+        height={0.28}
+        intensity={6}
+        position={[0, -0.03, 0]}
         rotation={[Math.PI / 2, 0, 0]}
-        color="#f5f5ff"
+        color="#f0f2ff"
       />
     </group>
   );
 }
 
+/* ── Lab bench with cabinet and epoxy top ── */
 function LabBench({
   position,
   width = 3,
@@ -32,113 +42,189 @@ function LabBench({
   width?: number;
   depth?: number;
 }) {
-  const topH = 0.04;
+  const topH = 0.045;
   const legH = 0.85;
-  const legW = 0.05;
 
   return (
     <group position={position}>
-      {/* Countertop — white epoxy */}
       <mesh position={[0, legH + topH / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[width, topH, depth]} />
-        <meshStandardMaterial color="#f0f0f0" roughness={0.15} metalness={0.05} />
+        <meshStandardMaterial
+          color="#eceee8"
+          roughness={0.12}
+          metalness={0.03}
+        />
       </mesh>
-      {/* Cabinet body */}
       <mesh position={[0, legH / 2, 0]}>
         <boxGeometry args={[width - 0.04, legH, depth - 0.04]} />
-        <meshStandardMaterial color="#d4d4d8" roughness={0.5} />
+        <meshStandardMaterial color="#c8cac4" roughness={0.55} />
       </mesh>
-      {/* Legs */}
       {[
-        [-width / 2 + 0.1, 0, -depth / 2 + 0.1],
-        [width / 2 - 0.1, 0, -depth / 2 + 0.1],
-        [-width / 2 + 0.1, 0, depth / 2 - 0.1],
-        [width / 2 - 0.1, 0, depth / 2 - 0.1],
+        [-width / 2 + 0.08, 0, -depth / 2 + 0.08],
+        [width / 2 - 0.08, 0, -depth / 2 + 0.08],
+        [-width / 2 + 0.08, 0, depth / 2 - 0.08],
+        [width / 2 - 0.08, 0, depth / 2 - 0.08],
       ].map((p, i) => (
-        <mesh key={i} position={[p[0], legW / 2, p[2]]}>
-          <boxGeometry args={[legW, legW, legW]} />
-          <meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} />
+        <mesh key={i} position={[p[0], 0.025, p[2]]}>
+          <boxGeometry args={[0.05, 0.05, 0.05]} />
+          <meshStandardMaterial
+            color="#888"
+            metalness={0.6}
+            roughness={0.3}
+          />
         </mesh>
       ))}
     </group>
   );
 }
 
-function FumeHood({ position }: { position: [number, number, number] }) {
+/* ── Fume hood ── */
+function FumeHood({
+  position,
+}: {
+  position: [number, number, number];
+}) {
   return (
     <group position={position}>
-      {/* Base cabinet */}
       <mesh position={[0, 0.45, 0]}>
         <boxGeometry args={[1.2, 0.9, 0.7]} />
-        <meshStandardMaterial color="#d4d4d8" roughness={0.5} />
+        <meshStandardMaterial color="#c8cac4" roughness={0.5} />
       </mesh>
-      {/* Work surface */}
       <mesh position={[0, 0.92, 0]}>
         <boxGeometry args={[1.24, 0.04, 0.74]} />
-        <meshStandardMaterial color="#e8e8e8" roughness={0.2} />
+        <meshStandardMaterial color="#ddddd8" roughness={0.18} />
       </mesh>
-      {/* Hood enclosure */}
       <mesh position={[0, 1.5, -0.1]}>
         <boxGeometry args={[1.2, 1.1, 0.6]} />
         <meshPhysicalMaterial
-          color="#e0e8f0"
+          color="#d8e4ee"
           transparent
-          opacity={0.15}
-          roughness={0.05}
-          metalness={0.1}
-          transmission={0.8}
+          opacity={0.12}
+          roughness={0.02}
+          metalness={0.05}
+          transmission={0.85}
         />
       </mesh>
-      {/* Hood top */}
       <mesh position={[0, 2.06, -0.1]}>
         <boxGeometry args={[1.24, 0.04, 0.64]} />
-        <meshStandardMaterial color="#9ca3af" metalness={0.4} roughness={0.3} />
+        <meshStandardMaterial
+          color="#9ca3af"
+          metalness={0.35}
+          roughness={0.3}
+        />
       </mesh>
     </group>
   );
 }
 
-function Stool({ position }: { position: [number, number, number] }) {
+/* ── Lab stool ── */
+function Stool({
+  position,
+}: {
+  position: [number, number, number];
+}) {
   return (
     <group position={position}>
-      {/* Seat */}
       <mesh position={[0, 0.65, 0]} castShadow>
         <cylinderGeometry args={[0.17, 0.17, 0.04, 24]} />
         <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
       </mesh>
-      {/* Pole */}
       <mesh position={[0, 0.35, 0]}>
         <cylinderGeometry args={[0.025, 0.025, 0.6, 8]} />
-        <meshStandardMaterial color="#999" metalness={0.7} roughness={0.3} />
+        <meshStandardMaterial
+          color="#999"
+          metalness={0.7}
+          roughness={0.3}
+        />
       </mesh>
-      {/* Base */}
       <mesh position={[0, 0.04, 0]}>
         <cylinderGeometry args={[0.22, 0.25, 0.08, 24]} />
-        <meshStandardMaterial color="#666" metalness={0.5} roughness={0.4} />
+        <meshStandardMaterial
+          color="#666"
+          metalness={0.5}
+          roughness={0.4}
+        />
       </mesh>
     </group>
   );
 }
 
-function Sink({ position }: { position: [number, number, number] }) {
+/* ── Sink ── */
+function Sink({
+  position,
+}: {
+  position: [number, number, number];
+}) {
   return (
     <group position={position}>
-      <mesh position={[0, 0, 0]}>
+      <mesh>
         <boxGeometry args={[0.4, 0.15, 0.3]} />
-        <meshStandardMaterial color="#c0c0c0" metalness={0.6} roughness={0.2} />
+        <meshStandardMaterial
+          color="#c0c0c0"
+          metalness={0.6}
+          roughness={0.2}
+        />
       </mesh>
-      {/* Faucet */}
       <mesh position={[0, 0.15, -0.1]}>
         <cylinderGeometry args={[0.015, 0.015, 0.25, 8]} />
-        <meshStandardMaterial color="#aaa" metalness={0.8} roughness={0.15} />
+        <meshStandardMaterial
+          color="#aaa"
+          metalness={0.8}
+          roughness={0.15}
+        />
       </mesh>
-      <mesh position={[0, 0.27, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh
+        position={[0, 0.27, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+      >
         <cylinderGeometry args={[0.015, 0.015, 0.12, 8]} />
-        <meshStandardMaterial color="#aaa" metalness={0.8} roughness={0.15} />
+        <meshStandardMaterial
+          color="#aaa"
+          metalness={0.8}
+          roughness={0.15}
+        />
       </mesh>
     </group>
   );
 }
+
+/* ── Shelf with bottles (background detail) ── */
+function ShelfRow({
+  position,
+}: {
+  position: [number, number, number];
+}) {
+  const bottleColors = ["#d4a44c", "#7ab", "#a66", "#8a8", "#ca8"];
+  return (
+    <group position={position}>
+      <mesh>
+        <boxGeometry args={[2.4, 0.03, 0.22]} />
+        <meshStandardMaterial color="#b8a080" roughness={0.6} />
+      </mesh>
+      {bottleColors.map((c, i) => (
+        <group key={i} position={[-0.9 + i * 0.45, 0.07, 0]}>
+          <mesh>
+            <cylinderGeometry args={[0.03, 0.035, 0.1, 12]} />
+            <meshPhysicalMaterial
+              color={c}
+              transparent
+              opacity={0.55}
+              roughness={0.08}
+            />
+          </mesh>
+          <mesh position={[0, 0.06, 0]}>
+            <cylinderGeometry args={[0.012, 0.02, 0.02, 8]} />
+            <meshStandardMaterial color="#444" roughness={0.5} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   MAIN ENVIRONMENT
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 export default function LabEnvironment() {
   const { camera } = useThree();
@@ -158,73 +244,110 @@ export default function LabEnvironment() {
 
   return (
     <>
-      {/* Ambient + directional fill — brighter for lab visibility */}
-      <ambientLight intensity={0.65} color="#f0f0ff" />
-      <directionalLight position={[3, 4, 2]} intensity={0.85} color="#fff" castShadow />
-      <directionalLight position={[-2, 3, 3]} intensity={0.35} color="#f0f8ff" />
+      {/* ── Lighting: warm key + cool fill + soft ambient ── */}
+      <ambientLight intensity={0.55} color="#f4efe8" />
+      <directionalLight
+        position={[3, 4, 2]}
+        intensity={0.9}
+        color="#fff8f0"
+        castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-camera-near={0.5}
+        shadow-camera-far={12}
+        shadow-camera-left={-4}
+        shadow-camera-right={4}
+        shadow-camera-top={4}
+        shadow-camera-bottom={-2}
+        shadow-bias={-0.001}
+      />
+      <directionalLight
+        position={[-2.5, 3, 3]}
+        intensity={0.3}
+        color="#e8f0ff"
+      />
+      <directionalLight
+        position={[0, 2.5, -3]}
+        intensity={0.15}
+        color="#f0f0ff"
+      />
 
-      {/* Floor — light vinyl */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+      {/* ── Floor — light vinyl tile ── */}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0, 0]}
+        receiveShadow
+      >
         <planeGeometry args={[roomW, roomD]} />
-        <meshStandardMaterial color="#e5e5e5" roughness={0.4} />
+        <meshStandardMaterial
+          color="#dddcd5"
+          roughness={0.35}
+          metalness={0.02}
+        />
       </mesh>
 
-      {/* Ceiling */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, roomH, 0]}>
+      {/* ── Ceiling ── */}
+      <mesh
+        rotation={[Math.PI / 2, 0, 0]}
+        position={[0, roomH, 0]}
+      >
         <planeGeometry args={[roomW, roomD]} />
-        <meshStandardMaterial color="#fafafa" />
+        <meshStandardMaterial color="#f5f4f0" />
       </mesh>
 
-      {/* Walls */}
-      {/* Back wall */}
+      {/* ── Walls — warm off-white ── */}
       <mesh position={[0, roomH / 2, -roomD / 2]}>
         <planeGeometry args={[roomW, roomH]} />
-        <meshStandardMaterial color="#f5f5f5" />
+        <meshStandardMaterial color="#f0eee6" />
       </mesh>
-      {/* Front wall (behind camera) */}
-      <mesh position={[0, roomH / 2, roomD / 2]} rotation={[0, Math.PI, 0]}>
+      <mesh
+        position={[0, roomH / 2, roomD / 2]}
+        rotation={[0, Math.PI, 0]}
+      >
         <planeGeometry args={[roomW, roomH]} />
-        <meshStandardMaterial color="#f0f0f0" />
+        <meshStandardMaterial color="#ece9e0" />
       </mesh>
-      {/* Left wall */}
-      <mesh position={[-roomW / 2, roomH / 2, 0]} rotation={[0, Math.PI / 2, 0]}>
+      <mesh
+        position={[-roomW / 2, roomH / 2, 0]}
+        rotation={[0, Math.PI / 2, 0]}
+      >
         <planeGeometry args={[roomD, roomH]} />
-        <meshStandardMaterial color="#f2f2f2" />
+        <meshStandardMaterial color="#edebe3" />
       </mesh>
-      {/* Right wall */}
-      <mesh position={[roomW / 2, roomH / 2, 0]} rotation={[0, -Math.PI / 2, 0]}>
+      <mesh
+        position={[roomW / 2, roomH / 2, 0]}
+        rotation={[0, -Math.PI / 2, 0]}
+      >
         <planeGeometry args={[roomD, roomH]} />
-        <meshStandardMaterial color="#f2f2f2" />
+        <meshStandardMaterial color="#edebe3" />
       </mesh>
 
-      {/* Fluorescent lights */}
-      <FluorescentLight position={[-2, roomH - 0.05, -1]} />
-      <FluorescentLight position={[2, roomH - 0.05, -1]} />
-      <FluorescentLight position={[-2, roomH - 0.05, 1.5]} />
-      <FluorescentLight position={[2, roomH - 0.05, 1.5]} />
-      <FluorescentLight position={[0, roomH - 0.05, -2.5]} />
-      <FluorescentLight position={[0, roomH - 0.05, 0.5]} />
+      {/* ── Overhead fluorescent lights ── */}
+      <LabLight position={[-2, roomH - 0.05, -1]} />
+      <LabLight position={[2, roomH - 0.05, -1]} />
+      <LabLight position={[-2, roomH - 0.05, 1.5]} />
+      <LabLight position={[2, roomH - 0.05, 1.5]} />
+      <LabLight position={[0, roomH - 0.05, -2.5]} />
+      <LabLight position={[0, roomH - 0.05, 0.5]} />
 
-      {/* Lab benches — two rows */}
+      {/* ── Lab benches ── */}
       <LabBench position={[-2.5, 0, -1]} width={3.5} />
       <LabBench position={[2.5, 0, -1]} width={3.5} />
       <LabBench position={[-2.5, 0, 1.5]} width={3.5} />
       <LabBench position={[2.5, 0, 1.5]} width={3.5} />
-
-      {/* Center bench (where titration happens) */}
       <LabBench position={[0, 0, 0]} width={2.5} depth={1} />
 
-      {/* Fume hoods along back wall */}
+      {/* ── Fume hoods along back wall ── */}
       <FumeHood position={[-3.5, 0, -roomD / 2 + 0.4]} />
       <FumeHood position={[-1.5, 0, -roomD / 2 + 0.4]} />
       <FumeHood position={[1.5, 0, -roomD / 2 + 0.4]} />
       <FumeHood position={[3.5, 0, -roomD / 2 + 0.4]} />
 
-      {/* Sinks on side benches */}
+      {/* ── Sinks ── */}
       <Sink position={[-2.5, 0.89, -0.7]} />
       <Sink position={[2.5, 0.89, -0.7]} />
 
-      {/* Stools */}
+      {/* ── Stools ── */}
       <Stool position={[-1.2, 0, 0.8]} />
       <Stool position={[1.2, 0, 0.8]} />
       <Stool position={[-3, 0, -0.2]} />
@@ -232,14 +355,46 @@ export default function LabEnvironment() {
       <Stool position={[-3, 0, 2.2]} />
       <Stool position={[3, 0, 2.2]} />
 
-      {/* Door (back-left) — yellow */}
+      {/* ── Background shelves with reagent bottles ── */}
+      <ShelfRow position={[-3.5, 1.6, -roomD / 2 + 0.15]} />
+      <ShelfRow position={[3.5, 1.6, -roomD / 2 + 0.15]} />
+      <ShelfRow position={[-3.5, 2.0, -roomD / 2 + 0.15]} />
+      <ShelfRow position={[3.5, 2.0, -roomD / 2 + 0.15]} />
+
+      {/* ── Door ── */}
       <mesh position={[-roomW / 2 + 0.01, 1.1, -2.5]}>
         <planeGeometry args={[0.9, 2.1]} />
-        <meshStandardMaterial color="#d4a520" roughness={0.6} />
+        <meshStandardMaterial color="#c49a38" roughness={0.55} />
       </mesh>
-      <mesh position={[-roomW / 2 + 0.02, 1.1, -2.2]} rotation={[0, Math.PI / 2, 0]}>
+      <mesh
+        position={[-roomW / 2 + 0.02, 1.1, -2.2]}
+        rotation={[0, Math.PI / 2, 0]}
+      >
         <boxGeometry args={[0.03, 0.06, 0.06]} />
-        <meshStandardMaterial color="#aaa" metalness={0.7} />
+        <meshStandardMaterial
+          color="#aaa"
+          metalness={0.7}
+        />
+      </mesh>
+
+      {/* ── Whiteboard on side wall ── */}
+      <mesh
+        position={[roomW / 2 - 0.01, 1.5, -1]}
+        rotation={[0, -Math.PI / 2, 0]}
+      >
+        <planeGeometry args={[2.2, 1.2]} />
+        <meshStandardMaterial
+          color="#f8f8f8"
+          roughness={0.08}
+          metalness={0.02}
+        />
+      </mesh>
+      <mesh
+        position={[roomW / 2 - 0.015, 1.5, -1]}
+        rotation={[0, -Math.PI / 2, 0]}
+      >
+        <boxGeometry args={[2.28, 1.28, 0.03]} />
+        <meshStandardMaterial color="#666" metalness={0.3} roughness={0.5} />
       </mesh>
     </>
   );
