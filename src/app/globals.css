@@ -65,4 +65,63 @@ canvas {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Dashboard / app shell — shared with landing “technical” motifs */
+  .emersa-dot-matrix {
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgba(255, 255, 255, 0.11) 1px,
+      transparent 0
+    );
+    background-size: 20px 20px;
+  }
+
+  .emersa-perspective-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    transform: perspective(400px) rotateX(12deg);
+    transform-origin: center top;
+  }
+
+  .emersa-dashboard-stars {
+    background-image:
+      radial-gradient(1px 1px at 18% 28%, rgba(255, 255, 255, 0.35), transparent),
+      radial-gradient(1px 1px at 62% 72%, rgba(255, 255, 255, 0.25), transparent),
+      radial-gradient(1px 1px at 48% 48%, rgba(255, 255, 255, 0.2), transparent),
+      radial-gradient(1px 1px at 82% 14%, rgba(255, 255, 255, 0.3), transparent),
+      radial-gradient(1px 1px at 30% 84%, rgba(255, 255, 255, 0.22), transparent);
+    background-size:
+      200% 200%,
+      180% 180%,
+      220% 220%,
+      190% 190%,
+      210% 210%;
+    background-position:
+      0% 0%,
+      40% 40%,
+      55% 55%,
+      75% 25%,
+      20% 80%;
+  }
+
+  .emersa-dither-rail {
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 1px,
+        rgba(255, 255, 255, 0.35) 1px,
+        rgba(255, 255, 255, 0.35) 2px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 1px,
+        rgba(255, 255, 255, 0.35) 1px,
+        rgba(255, 255, 255, 0.35) 2px
+      );
+    background-size: 3px 3px;
+  }
 }
