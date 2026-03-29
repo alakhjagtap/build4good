@@ -1,6 +1,6 @@
-# Immersa — AI Calculus 3 Tutor
+# Immersa
 
-An interactive AI-powered platform that teaches Calculus 3 concepts through synchronized explanation, interactive 3D visuals, and voice-based follow-up questions.
+An interactive AI-powered platform for **STEM learning**: synchronized explanations, interactive 3D visuals, voice interaction, and guided sessions in the browser.
 
 ## Quick Start
 
@@ -9,17 +9,15 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and type a concept like **"gradient vectors"** to begin.
+Open [http://localhost:3000](http://localhost:3000) to explore the app.
 
-## Supported Concepts
+## Features
 
-| Concept | Visualization |
-|---------|---------------|
-| Gradient Vectors | Surface + gradient arrow + contour lines |
-| Partial Derivatives | Surface with x/y plane slices |
-| Tangent Planes | Surface + tangent plane + normal vector |
-| Double Integrals | Volume region shading |
-| Lagrange Multipliers | Contour lines + constraint curve |
+- **Immersive sessions** — 3D environments and interactive visuals powered by React Three Fiber
+- **AI tutoring** — Streaming and structured lesson flows via API routes
+- **Voice** — Web Speech API for speech-in / speech-out where supported
+- **Math & notation** — KaTeX for LaTeX rendering in the UI
+- **Dashboard & onboarding** — Course-style entry into learning modes
 
 ## Architecture
 
@@ -63,7 +61,7 @@ The `AIInstructorPanel` includes a placeholder designed for HeyGen:
 
 ### LLM Integration
 The lesson engine uses a structured JSON schema:
-- Current: Predefined lesson templates for 5 concepts
+- Current: Predefined lesson templates for multiple concepts
 - Future: Call an LLM (GPT-4, Claude) to generate lessons on-the-fly from the schema
 
 ## Tech Stack
