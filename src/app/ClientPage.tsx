@@ -13,7 +13,8 @@ import {
   Pause,
   FlaskConical,
   Camera,
-  Video
+  Video,
+  Square
 } from "lucide-react";
 import { useLessonStore } from "@/lib/lesson-engine";
 import {
@@ -93,6 +94,7 @@ async function askTutor(
   message: string,
   lesson: { title: string; concept: string } | null,
   segment: { title: string; type: string; content: string } | null,
+  history: { role: string; text: string }[] = [],
 ): Promise<{ reply: string; desmosState?: any }> {
   try {
     const res = await fetch("/api/tutor", {
@@ -100,6 +102,7 @@ async function askTutor(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message,
+        history,
         lessonTitle: lesson?.title,
         lessonConcept: lesson?.concept,
         segment: segment
@@ -145,7 +148,9 @@ function Session({ onEnd }: { onEnd: () => void }) {
   const visionLoopRef = useRef<NodeJS.Timeout | null>(null);
   const [visionMath, setVisionMath] = useState<string[]>([]);
   const [showGraph, setShowGraph] = useState(false);
+  const [history, setHistory] = useState<{ role: "student" | "tutor"; text: string }[]>([]);
   const [desmosReady, setDesmosReady] = useState(false);
+  const [initialSilenceCount, setInitialSilenceCount] = useState(0);
   const onDesmosReady = useCallback(() => setDesmosReady(true), []);
 
   useAutoPlayback();
@@ -168,7 +173,12 @@ function Session({ onEnd }: { onEnd: () => void }) {
       ? `Hey ${firstName.trim()}, what would you like to learn today?`
       : "Hey, what would you like to learn today?";
 
-    avatarRef.current?.speak(greeting);
+    // Small delay to ensure the avatar is ready to receive commands
+    setTimeout(() => {
+      avatarRef.current?.speak(greeting).catch((err) => {
+        console.warn("[Session] Greeting failed:", err);
+      });
+    }, 600);
   }, []);
 
   // Only apply segment state if we are actually showing the graph layout.
@@ -177,9 +187,9 @@ function Session({ onEnd }: { onEnd: () => void }) {
     desmosRef.current.applyState(segment.desmosState);
   }, [desmosReady, segment, showGraph]);
 
-  // Speak caption when segment changes (retry once so we catch LiveAvatar after connect).
+  // Speak caption only when isPlaying is true and the segment actually changes.
   useEffect(() => {
-    if (!segment || segment.id === lastSpokenId.current) return;
+    if (!isPlaying || !segment || segment.id === lastSpokenId.current) return;
     lastSpokenId.current = segment.id;
 
     const text = segment.captionText ?? segment.content.slice(0, 250);
@@ -199,7 +209,7 @@ function Session({ onEnd }: { onEnd: () => void }) {
       }
     }, 1200);
     return () => clearTimeout(t);
-  }, [segment, voiceEnabled]);
+  }, [isPlaying, segment, voiceEnabled]);
 
   // Send a question to the real AI tutor
   const sendQuestion = useCallback(
@@ -223,13 +233,18 @@ function Session({ onEnd }: { onEnd: () => void }) {
       }
 
       try {
+        setHistory((prev) => [...prev, { role: "student", text: trimmed }]);
+
         const seg = useLessonStore.getState().getCurrentSegment();
         const lesson = useLessonStore.getState().currentLesson;
         const { reply, desmosState } = await askTutor(
           trimmed,
           lesson ? { title: lesson.title, concept: lesson.concept } : null,
           seg ? { title: seg.title, type: seg.type, content: seg.content } : null,
+          history
         );
+
+        setHistory((prev) => [...prev, { role: "tutor", text: reply }]);
 
         if (desmosState && desmosRef.current) {
           setShowGraph(true);
@@ -260,9 +275,6 @@ function Session({ onEnd }: { onEnd: () => void }) {
     startContinuousListening({
       onInterim: (text) => {
         setInterim(text);
-        if (text.trim().length > 2 && avatarRef.current?.isSpeaking()) {
-          void avatarRef.current.interrupt();
-        }
       },
       onFinal: (text) => {
         setInterim("");
@@ -276,9 +288,6 @@ function Session({ onEnd }: { onEnd: () => void }) {
         startContinuousListening({
           onInterim: (text) => {
             setInterim(text);
-            if (text.trim().length > 2 && avatarRef.current?.isSpeaking()) {
-              void avatarRef.current.interrupt();
-            }
           },
           onFinal: (text) => {
             setInterim("");
@@ -424,6 +433,18 @@ function Session({ onEnd }: { onEnd: () => void }) {
         <div className="flex items-center gap-2 border-l border-gray-100 pl-3 pr-2">
           <Video className="w-4 h-4 text-emerald-500" />
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Vision Engine Active</span>
+        </div>
+
+        {/* Skip button (interrupt avatar) */}
+        <div className="border-l border-gray-100 pl-3">
+          <button
+            onClick={() => avatarRef.current?.interrupt()}
+            className="flex items-center gap-2 bg-zinc-100 hover:bg-zinc-200 px-4 py-2.5 rounded-full text-zinc-900 text-sm font-bold transition-colors shadow-sm whitespace-nowrap"
+            title="Skip/Stop Speaking"
+          >
+            <Square className="w-3.5 h-3.5 fill-current" />
+            Skip
+          </button>
         </div>
 
         {/* Leave Button */}
