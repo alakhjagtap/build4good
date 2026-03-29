@@ -101,6 +101,13 @@ function phLabel(ph: number): string {
   return "Strongly Basic";
 }
 
+function phDisplayColor(ph: number): string {
+  if (ph < 5) return "#1e3a5f";
+  if (ph < 7) return "#155e50";
+  if (ph < 8.5) return "#065f46";
+  return "#831843";
+}
+
 /* ─── highlight blend targets ─── */
 
 type HighlightPart = "burette" | "flask" | "indicator";
@@ -108,7 +115,7 @@ type BlendMap = Record<HighlightPart, number>;
 
 const BASE_OPACITY: Record<HighlightPart, number> = {
   burette: 0.32,
-  flask: 0.26,
+  flask: 0.48,
   indicator: 0.28,
 };
 
@@ -154,7 +161,13 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
     0.02,
     1 - (drops * MICRO_ML) / BURETTE_CAPACITY_ML,
   );
-  const liquidHeight = 0.08 + Math.min(drops * 0.00003, 0.04);
+  const addedVolumeMl = drops * MICRO_ML;
+  const fillRatio = Math.min(addedVolumeMl / BURETTE_CAPACITY_ML, 1);
+  const liquidHeight = 0.065 + fillRatio * 0.065;
+  const liquidCenterY = -0.055 + liquidHeight / 2;
+  const liquidTopY = liquidCenterY + liquidHeight / 2;
+  const liquidTopFraction = Math.min(1, (liquidTopY + 0.06) / 0.12);
+  const liquidTopR = 0.078 - liquidTopFraction * 0.02;
 
   /* ── imperative API ── */
 
@@ -374,37 +387,86 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
 
       {/* ── Erlenmeyer flask ── */}
       <group position={[0, BENCH_Y + 0.01, -0.1]}>
+        {/* shadow disc under flask */}
+        <mesh
+          position={[0, -0.059, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          receiveShadow
+        >
+          <circleGeometry args={[0.1, 32]} />
+          <meshStandardMaterial
+            color="#888"
+            transparent
+            opacity={0.12}
+          />
+        </mesh>
+        {/* flask body */}
         <mesh ref={flaskBodyRef} castShadow>
           <cylinderGeometry args={[0.065, 0.088, 0.12, 28, 1, true]} />
           <meshPhysicalMaterial
-            color="#e4ecf6"
+            color="#d8e4f0"
             transparent
             opacity={BASE_OPACITY.flask}
             roughness={0.02}
-            metalness={0.02}
+            metalness={0.04}
             emissive={emissiveColor}
             emissiveIntensity={0}
             side={THREE.DoubleSide}
+            ior={1.5}
+            thickness={0.5}
           />
         </mesh>
+        {/* flask bottom disc */}
+        <mesh
+          position={[0, -0.06, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          <circleGeometry args={[0.088, 28]} />
+          <meshPhysicalMaterial
+            color="#d8e4f0"
+            transparent
+            opacity={0.18}
+            roughness={0.02}
+          />
+        </mesh>
+        {/* flask body edge highlight ring at base */}
+        <mesh position={[0, -0.06, 0]}>
+          <torusGeometry args={[0.088, 0.002, 8, 28]} />
+          <meshPhysicalMaterial
+            color="#c0d0e0"
+            transparent
+            opacity={0.55}
+            roughness={0.02}
+          />
+        </mesh>
+        {/* flask neck */}
         <mesh ref={flaskNeckRef} position={[0, 0.09, 0]}>
           <cylinderGeometry args={[0.022, 0.06, 0.06, 18, 1, true]} />
           <meshPhysicalMaterial
-            color="#e4ecf6"
+            color="#d8e4f0"
             transparent
             opacity={BASE_OPACITY.flask}
             roughness={0.02}
             emissive={emissiveColor}
             emissiveIntensity={0}
             side={THREE.DoubleSide}
+            ior={1.5}
+            thickness={0.5}
           />
         </mesh>
+        {/* flask rim */}
         <mesh position={[0, 0.12, 0]}>
-          <torusGeometry args={[0.022, 0.003, 8, 24]} />
-          <meshPhysicalMaterial color="#dce4f0" transparent opacity={0.4} />
+          <torusGeometry args={[0.022, 0.004, 8, 24]} />
+          <meshPhysicalMaterial color="#c8d8e8" transparent opacity={0.65} />
         </mesh>
-        <mesh ref={solutionRef} position={[0, -0.01, 0]}>
-          <cylinderGeometry args={[0.06, 0.082, liquidHeight, 28]} />
+        {/* body-to-neck junction ring */}
+        <mesh position={[0, 0.06, 0]}>
+          <torusGeometry args={[0.065, 0.002, 8, 24]} />
+          <meshPhysicalMaterial color="#c0d0e0" transparent opacity={0.4} />
+        </mesh>
+        {/* solution liquid */}
+        <mesh ref={solutionRef} position={[0, liquidCenterY, 0]}>
+          <cylinderGeometry args={[liquidTopR, 0.078, liquidHeight, 28]} />
           <meshPhysicalMaterial
             color={targetColor}
             transparent
@@ -412,9 +474,23 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
             roughness={0.04}
           />
         </mesh>
+        {/* liquid surface disc for visible level line */}
+        <mesh
+          position={[0, liquidCenterY + liquidHeight / 2 - 0.001, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          <circleGeometry args={[liquidTopR - 0.003, 28]} />
+          <meshPhysicalMaterial
+            color={targetColor}
+            transparent
+            opacity={Math.min(phenolOpacity(ph) + 0.15, 0.9)}
+            roughness={0.01}
+          />
+        </mesh>
+        {/* ripple */}
         <mesh
           ref={rippleRef}
-          position={[0, liquidHeight / 2 - 0.005, 0]}
+          position={[0, liquidCenterY + liquidHeight / 2 + 0.001, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
         >
           <ringGeometry args={[0.015, 0.02, 32]} />
@@ -481,33 +557,44 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
       <Html position={[0.42, BENCH_Y + 0.55, -0.1]} distanceFactor={3}>
         <div
           style={{
-            background: "rgba(255,255,255,0.92)",
-            backdropFilter: "blur(12px)",
-            color: "#1a1a1a",
-            padding: "10px 16px",
+            background: "rgba(255,255,255,0.96)",
+            backdropFilter: "blur(14px)",
+            color: "#111",
+            padding: "12px 18px",
             borderRadius: 14,
             fontSize: 13,
             fontFamily: "system-ui",
             whiteSpace: "nowrap",
-            border: "1px solid rgba(0,0,0,0.08)",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+            border: "1px solid rgba(0,0,0,0.14)",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.14)",
             pointerEvents: "none",
-            minWidth: 140,
+            minWidth: 150,
           }}
         >
-          <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 14, color: "#333" }}>
+          <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 14, color: "#111" }}>
             Acid-Base Titration
           </div>
-          <div style={{ marginBottom: 3 }}>
-            pH:{" "}
-            <span style={{ color: phenolHex(ph), fontWeight: 700, fontSize: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ color: "#222", fontWeight: 600, fontSize: 13 }}>pH:</span>
+            <span style={{ color: phDisplayColor(ph), fontWeight: 800, fontSize: 22 }}>
               {ph.toFixed(2)}
             </span>
+            <span
+              style={{
+                display: "inline-block",
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                backgroundColor: phenolHex(ph),
+                border: "1px solid rgba(0,0,0,0.15)",
+                flexShrink: 0,
+              }}
+            />
           </div>
-          <div style={{ fontSize: 11, color: phenolHex(ph), fontWeight: 600 }}>
+          <div style={{ fontSize: 12, color: phDisplayColor(ph), fontWeight: 700 }}>
             {phLabel(ph)}
           </div>
-          <div style={{ fontSize: 11, opacity: 0.5, marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: "#555", marginTop: 6 }}>
             {(drops * MICRO_ML).toFixed(1)} mL NaOH added
           </div>
         </div>

@@ -23,6 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
   Waves,
+  SkipForward,
 } from "lucide-react";
 import {
   startContinuousListening,
@@ -404,6 +405,27 @@ export default function ChemistrySession({
   const advanceExplanationRef = useRef(advanceExplanation);
   advanceExplanationRef.current = advanceExplanation;
 
+  /* ── skip intro: jump straight to demo ── */
+
+  const skipIntro = useCallback(() => {
+    if (speechTimeoutRef.current) {
+      clearTimeout(speechTimeoutRef.current);
+      speechTimeoutRef.current = null;
+    }
+    interruptAvatar();
+    titrationRef.current?.setHighlight(null);
+    setConvState("DEMO_ACTIVE");
+    setLabEnabled(true);
+    startAmbient();
+    setChat((p) => [
+      ...p,
+      {
+        role: "system" as const,
+        text: "Intro skipped — lab controls are now active.",
+      },
+    ]);
+  }, [interruptAvatar]);
+
   /* ── speaking state callback (drives explanation) ── */
 
   const onSpeakingChange = useCallback((isSpeaking: boolean) => {
@@ -690,6 +712,24 @@ export default function ChemistrySession({
               transition={{ duration: 0.5 }}
               className="absolute inset-0 bg-black/25 z-[1] pointer-events-none"
             />
+          )}
+        </AnimatePresence>
+
+        {/* Skip Intro button — visible only during setup explanation */}
+        <AnimatePresence>
+          {(convState === "EXPLAINING" ||
+            convState === "LAB_REQUESTED") && (
+            <motion.button
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+              transition={{ duration: 0.3, delay: 0.6 }}
+              onClick={skipIntro}
+              className="absolute bottom-[100px] left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] backdrop-blur-xl border border-white/[0.12] text-white/80 hover:text-white text-sm font-medium shadow-lg transition-all duration-200 cursor-pointer select-none"
+            >
+              <SkipForward className="w-3.5 h-3.5" />
+              Skip Intro
+            </motion.button>
           )}
         </AnimatePresence>
 
