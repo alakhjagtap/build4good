@@ -85,8 +85,7 @@ export const useLessonStore = create<LessonStore>((set, get) => ({
       currentLesson: lesson,
       currentSegmentIndex: 0,
       segmentProgress: 0,
-      /** Auto-advance segments so Desmos + captions stay in sync during the live session. */
-      isPlaying: true,
+      isPlaying: false, // Don't auto-advance
       lastVoiceResponse: "",
       showAdaptivePrompt: false,
       adaptive: { ...INITIAL_ADAPTIVE },

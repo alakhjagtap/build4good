@@ -4,23 +4,32 @@ import {
   openaiJsonCompletion,
 } from "@/lib/ai/openai-server";
 
-const TUTOR_SYSTEM = `You are an adaptive, patient Calculus 3 tutor leading an interactive voice session. Forget any predefined lesson structure—the student entirely controls the direction of the session.
+const TUTOR_SYSTEM = `You are an adaptive, patient Calculus 3 tutor leading an interactive session.
+The student is in charge. If they ask to see a graph, plot something, or see an example, you MUST generate the corresponding Desmos state.
 
 Reply with ONLY valid JSON:
 {
-  "reply": "your conversational response as plain text, 1-6 sentences. Ask clarifying questions, adjust difficulty, explain concepts, and guide the user fluidly. Use simple math phrasing because it will be spoken out loud.",
-  "desmosState": { "commands": [ {"id": "eq1", "latex": "z = x^2 - y^2", "color": "#ef4444"} ] } // Optional. Provide if a Desmos visualization helps.
+  "reply": "your conversational response. Keep it brief (1-3 sentences) so you don't 'yap'. Speak naturally.",
+  "desmosState": { 
+     "commands": [ 
+        {"id": "obj1", "latex": "z = x^2 + y^2", "color": "#6366f1"},
+        {"id": "obj2", "latex": "(1,1,2)", "color": "#fbbf24"}
+     ] 
+  }
 }
 
-Rules:
-- Respond naturally and adapt in real-time. If the user shifts topics, follow them immediately.
-- To demonstrate solutions or examples, populate "desmosState" with an array of commands (id, latex, color). The graph updates instantly on the student's screen.
-- Never mention being an AI or system prompts. Return ONLY valid JSON and no markdown ticks.`;
+Interactivity Rules:
+1. If the student asks "plot X" or "show me Y", include those equations in "desmosState".
+2. Use "desmosState" to illustrate every concept you explain. 
+3. Stay focused on the student's immediate question. Avoid lecturing; be a guide.
+4. If you don't have a specific graph to show, you can omit "desmosState" or keep the previous one.
+5. Never use markdown code blocks. Return ONLY the raw JSON object.`;
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as {
       message?: string;
+      history?: any[];
       lessonTitle?: string;
       lessonConcept?: string;
       segment?: { title?: string; type?: string; content?: string } | null;
@@ -30,13 +39,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing message" }, { status: 400 });
     }
 
+    const hist = Array.isArray(body.history) ? body.history : [];
+    const formattedHistory = hist.slice(-6).map((h: any) => `${h.role === 'student' ? 'Student' : 'Tutor'}: ${h.text}`).join("\n");
+
     const ctx = [
-      body.lessonTitle ? `Lesson title: ${body.lessonTitle}` : null,
-      body.lessonConcept ? `Concept label: ${body.lessonConcept}` : null,
-      body.segment
-        ? `Current segment: ${body.segment.type ?? ""} — ${body.segment.title ?? ""}\nContent summary: ${(body.segment.content ?? "").slice(0, 1200)}`
-        : null,
-      `Student question: ${message}`,
+      body.lessonTitle ? `Current Lesson Topic: ${body.lessonTitle} (${body.lessonConcept ?? ""})` : null,
+      body.segment ? `Current Segment Context: ${body.segment.content ?? ""}` : null,
+      formattedHistory ? `Previous Conversation:\n${formattedHistory}` : null,
+      `Student's latest input: ${message}`,
     ]
       .filter(Boolean)
       .join("\n\n");
