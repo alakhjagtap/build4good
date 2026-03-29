@@ -133,9 +133,11 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
 
   /* mesh refs for animated materials */
   const solutionRef = useRef<THREE.Mesh>(null);
+  const liquidSurfaceRef = useRef<THREE.Mesh>(null);
   const dropRef = useRef<THREE.Mesh>(null);
+  const dripStreamRef = useRef<THREE.Mesh>(null);
   const rippleRef = useRef<THREE.Mesh>(null);
-  const streamRef = useRef<THREE.Mesh>(null);
+  const streamRef = useRef<THREE.Group>(null);
   const buretteGlassRef = useRef<THREE.Mesh>(null);
   const flaskBodyRef = useRef<THREE.Mesh>(null);
   const flaskNeckRef = useRef<THREE.Mesh>(null);
@@ -157,6 +159,7 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
 
   const ph = computePH(drops);
   const targetColor = phenolColor(ph);
+  const targetOpacity = phenolOpacity(ph);
   const buretteLevel = Math.max(
     0.02,
     1 - (drops * MICRO_ML) / BURETTE_CAPACITY_ML,
@@ -224,6 +227,13 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
     if (dropping && dropRef.current) {
       dropYRef.current -= delta * 2.0;
       dropRef.current.position.y = dropYRef.current;
+      if (dripStreamRef.current) {
+        const yTop = TIP_Y;
+        const yBot = dropYRef.current;
+        const h = Math.max(0.012, yTop - yBot);
+        dripStreamRef.current.position.y = (yTop + yBot) / 2;
+        dripStreamRef.current.scale.set(1, h, 1);
+      }
       if (dropYRef.current <= LIQUID_SURFACE_Y) {
         setDropping(false);
         setDrops((d) => d + CLICK_DROPS);
@@ -261,12 +271,19 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
         Math.max(0, rippleAlphaRef.current);
     }
 
-    /* ── Solution color: continuous smooth lerp ── */
+    /* ── Solution color: slow exponential lerp (material color is not bound to ph in JSX) ── */
+    const colorLerp = 1 - Math.exp(-delta * 0.85);
+    const opacityLerp = 1 - Math.exp(-delta * 1.15);
+    const surfaceTargetOpacity = Math.min(targetOpacity + 0.15, 0.9);
     if (solutionRef.current) {
       const mat = solutionRef.current.material as THREE.MeshPhysicalMaterial;
-      const speed = delta * 5;
-      mat.color.lerp(targetColor, speed);
-      mat.opacity = lerpScalar(mat.opacity, phenolOpacity(ph), speed);
+      mat.color.lerp(targetColor, colorLerp);
+      mat.opacity = lerpScalar(mat.opacity, targetOpacity, opacityLerp);
+    }
+    if (liquidSurfaceRef.current) {
+      const mat = liquidSurfaceRef.current.material as THREE.MeshPhysicalMaterial;
+      mat.color.lerp(targetColor, colorLerp);
+      mat.opacity = lerpScalar(mat.opacity, surfaceTargetOpacity, opacityLerp);
     }
 
     /* ── Stream wobble ── */
@@ -308,6 +325,10 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
   const streamH = TIP_Y - FLASK_OPEN_Y;
   const streamMidY = (TIP_Y + FLASK_OPEN_Y) / 2;
   const emissiveColor = "#506878";
+
+  const initialPh = computePH(0);
+  const initialSolutionOpacity = phenolOpacity(initialPh);
+  const initialSurfaceOpacity = Math.min(initialSolutionOpacity + 0.15, 0.9);
 
   return (
     <group position={[0, 0, 0]}>
@@ -372,17 +393,32 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
         </mesh>
       </group>
 
-      {/* ── Pour stream ── */}
+      {/* ── Pour stream (bright core + soft outer so flow reads as water) ── */}
       {pouring && (
-        <mesh ref={streamRef} position={[0, streamMidY, -0.1]}>
-          <cylinderGeometry args={[0.004, 0.002, streamH, 8]} />
-          <meshPhysicalMaterial
-            color="#a8c8ee"
-            transparent
-            opacity={0.6}
-            roughness={0.02}
-          />
-        </mesh>
+        <group ref={streamRef} position={[0, streamMidY, -0.1]}>
+          <mesh>
+            <cylinderGeometry args={[0.014, 0.008, streamH, 12]} />
+            <meshPhysicalMaterial
+              color="#6ab0e8"
+              transparent
+              opacity={0.28}
+              roughness={0.12}
+              depthWrite={false}
+            />
+          </mesh>
+          <mesh>
+            <cylinderGeometry args={[0.007, 0.004, streamH, 10]} />
+            <meshPhysicalMaterial
+              color="#c8e8ff"
+              transparent
+              opacity={0.92}
+              roughness={0.02}
+              emissive="#a0d0ff"
+              emissiveIntensity={0.55}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
       )}
 
       {/* ── Erlenmeyer flask ── */}
@@ -468,22 +504,23 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
         <mesh ref={solutionRef} position={[0, liquidCenterY, 0]}>
           <cylinderGeometry args={[liquidTopR, 0.078, liquidHeight, 28]} />
           <meshPhysicalMaterial
-            color={targetColor}
+            color={CLEAR_COLOR}
             transparent
-            opacity={phenolOpacity(ph)}
+            opacity={initialSolutionOpacity}
             roughness={0.04}
           />
         </mesh>
         {/* liquid surface disc for visible level line */}
         <mesh
+          ref={liquidSurfaceRef}
           position={[0, liquidCenterY + liquidHeight / 2 - 0.001, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
         >
           <circleGeometry args={[liquidTopR - 0.003, 28]} />
           <meshPhysicalMaterial
-            color={targetColor}
+            color={CLEAR_COLOR}
             transparent
-            opacity={Math.min(phenolOpacity(ph) + 0.15, 0.9)}
+            opacity={initialSurfaceOpacity}
             roughness={0.01}
           />
         </mesh>
@@ -503,17 +540,34 @@ const TitrationSetup = forwardRef<TitrationHandle>((_props, ref) => {
         </mesh>
       </group>
 
-      {/* ── Falling drop ── */}
+      {/* ── Falling drop + visible thread from burette tip ── */}
       {dropping && (
-        <mesh ref={dropRef} position={[0, dropYRef.current, -0.1]}>
-          <sphereGeometry args={[0.008, 10, 10]} />
-          <meshPhysicalMaterial
-            color="#a8c8ee"
-            transparent
-            opacity={0.85}
-            roughness={0.02}
-          />
-        </mesh>
+        <>
+          <mesh ref={dripStreamRef} position={[0, (TIP_Y + dropYRef.current) / 2, -0.1]}>
+            <cylinderGeometry args={[0.0045, 0.0045, 1, 8]} />
+            <meshPhysicalMaterial
+              color="#b8dcff"
+              transparent
+              opacity={0.88}
+              roughness={0.02}
+              emissive="#90c8ff"
+              emissiveIntensity={0.45}
+              toneMapped={false}
+            />
+          </mesh>
+          <mesh ref={dropRef} position={[0, dropYRef.current, -0.1]}>
+            <sphereGeometry args={[0.01, 12, 12]} />
+            <meshPhysicalMaterial
+              color="#c8e8ff"
+              transparent
+              opacity={0.92}
+              roughness={0.02}
+              emissive="#a0d8ff"
+              emissiveIntensity={0.35}
+              toneMapped={false}
+            />
+          </mesh>
+        </>
       )}
 
       {/* ── Indicator beaker ── */}

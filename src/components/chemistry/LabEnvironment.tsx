@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -481,6 +481,281 @@ function ReagentBottle({
   );
 }
 
+/* ── Notebook & clipboard on bench ── */
+function Notebook({
+  position,
+  rotationY = 0,
+}: {
+  position: [number, number, number];
+  rotationY?: number;
+}) {
+  return (
+    <group position={position} rotation={[0, rotationY, 0]}>
+      <mesh position={[0, 0.008, 0]} castShadow>
+        <boxGeometry args={[0.14, 0.018, 0.2]} />
+        <meshStandardMaterial color="#c4a574" roughness={0.75} />
+      </mesh>
+      <mesh position={[0, 0.017, -0.002]} castShadow>
+        <boxGeometry args={[0.13, 0.004, 0.19]} />
+        <meshStandardMaterial color="#faf8f2" roughness={0.55} />
+      </mesh>
+    </group>
+  );
+}
+
+function Clipboard({
+  position,
+  rotationY = 0,
+}: {
+  position: [number, number, number];
+  rotationY?: number;
+}) {
+  return (
+    <group position={position} rotation={[0, rotationY, 0]}>
+      <mesh castShadow>
+        <boxGeometry args={[0.02, 0.22, 0.16]} />
+        <meshStandardMaterial color="#5c4030" roughness={0.65} />
+      </mesh>
+      <mesh position={[0.012, 0, 0]} castShadow>
+        <boxGeometry args={[0.004, 0.2, 0.14]} />
+        <meshStandardMaterial color="#f5f5f0" roughness={0.45} />
+      </mesh>
+    </group>
+  );
+}
+
+function HotPlate({
+  position,
+}: {
+  position: [number, number, number];
+}) {
+  return (
+    <group position={position}>
+      <mesh castShadow>
+        <boxGeometry args={[0.22, 0.04, 0.22]} />
+        <meshStandardMaterial color="#3a3a3a" metalness={0.4} roughness={0.45} />
+      </mesh>
+      <mesh position={[0, 0.025, 0]}>
+        <cylinderGeometry args={[0.08, 0.08, 0.012, 24]} />
+        <meshStandardMaterial color="#222" metalness={0.5} roughness={0.35} />
+      </mesh>
+      <mesh position={[0.1, 0.045, 0.08]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.025, 12]} />
+        <meshStandardMaterial color="#222" roughness={0.4} />
+      </mesh>
+    </group>
+  );
+}
+
+function Pipette({
+  position,
+}: {
+  position: [number, number, number];
+}) {
+  return (
+    <group position={position} rotation={[0.35, 0, 0.2]}>
+      <mesh>
+        <cylinderGeometry args={[0.004, 0.006, 0.14, 8]} />
+        <meshPhysicalMaterial
+          color="#e8f0f8"
+          transparent
+          opacity={0.35}
+          roughness={0.05}
+        />
+      </mesh>
+      <mesh position={[0, -0.08, 0]}>
+        <coneGeometry args={[0.008, 0.025, 8]} />
+        <meshPhysicalMaterial
+          color="#e8f0f8"
+          transparent
+          opacity={0.35}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/* ── Stylized student with lab coat + safety goggles ── */
+function LabPerson({
+  position,
+  rotationY = 0,
+  skinTone = "#e8c4b0",
+  coatColor = "#f4f6fb",
+  pantsColor = "#2a3344",
+  hairDark = false,
+}: {
+  position: [number, number, number];
+  rotationY?: number;
+  skinTone?: string;
+  coatColor?: string;
+  pantsColor?: string;
+  hairDark?: boolean;
+}) {
+  const hairColor = hairDark ? "#3a3028" : "#8b6914";
+  return (
+    <group position={position} rotation={[0, rotationY, 0]}>
+      {/* Feet / shoes */}
+      <mesh position={[-0.07, 0.035, 0.02]} castShadow>
+        <boxGeometry args={[0.1, 0.05, 0.2]} />
+        <meshStandardMaterial color="#222" roughness={0.85} />
+      </mesh>
+      <mesh position={[0.07, 0.035, 0.02]} castShadow>
+        <boxGeometry args={[0.1, 0.05, 0.2]} />
+        <meshStandardMaterial color="#222" roughness={0.85} />
+      </mesh>
+      {/* Legs */}
+      <mesh position={[-0.07, 0.28, 0]} castShadow>
+        <boxGeometry args={[0.11, 0.42, 0.14]} />
+        <meshStandardMaterial color={pantsColor} roughness={0.75} />
+      </mesh>
+      <mesh position={[0.07, 0.28, 0]} castShadow>
+        <boxGeometry args={[0.11, 0.42, 0.14]} />
+        <meshStandardMaterial color={pantsColor} roughness={0.75} />
+      </mesh>
+      {/* Torso — lab coat */}
+      <mesh position={[0, 0.72, 0]} castShadow>
+        <boxGeometry args={[0.4, 0.52, 0.24]} />
+        <meshStandardMaterial color={coatColor} roughness={0.55} />
+      </mesh>
+      <mesh position={[0, 0.72, 0.125]} castShadow>
+        <boxGeometry args={[0.08, 0.45, 0.02]} />
+        <meshStandardMaterial color="#dfe6ee" roughness={0.5} />
+      </mesh>
+      {/* Arms */}
+      <mesh position={[-0.24, 0.7, 0]} castShadow rotation={[0, 0, 0.15]}>
+        <boxGeometry args={[0.1, 0.38, 0.12]} />
+        <meshStandardMaterial color={coatColor} roughness={0.55} />
+      </mesh>
+      <mesh position={[0.24, 0.7, 0]} castShadow rotation={[0, 0, -0.15]}>
+        <boxGeometry args={[0.1, 0.38, 0.12]} />
+        <meshStandardMaterial color={coatColor} roughness={0.55} />
+      </mesh>
+      {/* Hands */}
+      <mesh position={[-0.28, 0.52, 0.05]} castShadow>
+        <sphereGeometry args={[0.045, 10, 10]} />
+        <meshStandardMaterial color={skinTone} roughness={0.65} />
+      </mesh>
+      <mesh position={[0.28, 0.52, 0.05]} castShadow>
+        <sphereGeometry args={[0.045, 10, 10]} />
+        <meshStandardMaterial color={skinTone} roughness={0.65} />
+      </mesh>
+      {/* Neck */}
+      <mesh position={[0, 0.98, 0]} castShadow>
+        <cylinderGeometry args={[0.05, 0.055, 0.08, 10]} />
+        <meshStandardMaterial color={skinTone} roughness={0.65} />
+      </mesh>
+      {/* Head */}
+      <mesh position={[0, 1.12, 0]} castShadow>
+        <sphereGeometry args={[0.12, 18, 18]} />
+        <meshStandardMaterial color={skinTone} roughness={0.65} />
+      </mesh>
+      {/* Hair */}
+      <mesh position={[0, 1.2, -0.05]} castShadow scale={[1.05, 0.48, 0.95]}>
+        <sphereGeometry args={[0.11, 14, 14]} />
+        <meshStandardMaterial color={hairColor} roughness={0.9} />
+      </mesh>
+      {/* Safety goggles — strap + lenses */}
+      <mesh position={[0, 1.1, 0.1]} castShadow>
+        <boxGeometry args={[0.22, 0.035, 0.025]} />
+        <meshStandardMaterial color="#2a2a2a" roughness={0.45} metalness={0.3} />
+      </mesh>
+      <mesh position={[-0.045, 1.1, 0.115]}>
+        <sphereGeometry args={[0.042, 14, 14]} />
+        <meshPhysicalMaterial
+          color="#a8ddff"
+          transparent
+          opacity={0.42}
+          roughness={0.12}
+          metalness={0.05}
+          clearcoat={0.6}
+        />
+      </mesh>
+      <mesh position={[0.045, 1.1, 0.115]}>
+        <sphereGeometry args={[0.042, 14, 14]} />
+        <meshPhysicalMaterial
+          color="#a8ddff"
+          transparent
+          opacity={0.42}
+          roughness={0.12}
+          metalness={0.05}
+          clearcoat={0.6}
+        />
+      </mesh>
+      <mesh position={[0, 1.14, 0.06]}>
+        <torusGeometry args={[0.11, 0.006, 6, 20, Math.PI]} />
+        <meshStandardMaterial color="#333" roughness={0.4} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ── Whiteboard: single textured plane (avoids z-fighting vs Html + stacked meshes) ── */
+function ChemWhiteboard({
+  position,
+}: {
+  position: [number, number, number];
+}) {
+  const [map, setMap] = useState<THREE.CanvasTexture | null>(null);
+
+  useEffect(() => {
+    const W = 2048;
+    const H = 1152;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const g = canvas.getContext("2d");
+    if (!g) return;
+
+    g.fillStyle = "#fafaf8";
+    g.fillRect(0, 0, W, H);
+
+    g.strokeStyle = "#4a4a4a";
+    g.lineWidth = 28;
+    g.strokeRect(16, 16, W - 32, H - 32);
+
+    g.fillStyle = "#1a1a1a";
+    g.font = "bold 210px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText("CHEM 117", W / 2, H / 2 - 90);
+
+    g.fillStyle = "#500000";
+    g.font = "bold 118px Georgia, 'Times New Roman', serif";
+    g.fillText("TEXAS A&M", W / 2, H / 2 + 150);
+
+    g.fillStyle = "#555";
+    g.font = "600 54px system-ui, sans-serif";
+    g.fillText("General Chemistry", W / 2, H / 2 + 280);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = true;
+    tex.needsUpdate = true;
+
+    setMap(tex);
+    return () => {
+      tex.dispose();
+    };
+  }, []);
+
+  return (
+    <mesh position={position} rotation={[0, -Math.PI / 2, 0]}>
+      <planeGeometry args={[2.2, 1.2]} />
+      <meshStandardMaterial
+        map={map ?? undefined}
+        color="#ffffff"
+        roughness={0.55}
+        metalness={0.02}
+        polygonOffset
+        polygonOffsetFactor={2}
+        polygonOffsetUnits={2}
+      />
+    </mesh>
+  );
+}
+
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    MAIN ENVIRONMENT
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -653,6 +928,58 @@ export default function LabEnvironment() {
       <ReagentBottle position={[-3.0, 0.895, 1.62]} color="#669933" />
       <ReagentBottle position={[-3.3, 0.895, -0.92]} color="#aa4444" />
 
+      {/* ── Extra bench props (center + side stations) ── */}
+      <Notebook position={[0.78, 0.895, 0.3]} rotationY={-0.5} />
+      <Clipboard position={[-0.85, 0.895, 0.28]} rotationY={0.45} />
+      <HotPlate position={[-0.52, 0.895, -0.32]} />
+      <Pipette position={[0.58, 0.905, -0.26]} />
+      <BenchBeaker
+        position={[0.92, 0.895, 0.12]}
+        liquidColor="#ddeeff"
+        liquidLevel={0.25}
+      />
+      <BenchBeaker
+        position={[-0.95, 0.895, 0.18]}
+        liquidColor="#eeddcc"
+        liquidLevel={0.5}
+      />
+      <ReagentBottle position={[0.35, 0.895, 0.38]} color="#8844aa" />
+      <TestTubeRack position={[1.05, 0.895, -0.35]} />
+      <Notebook position={[-1.95, 0.895, 0.34]} rotationY={0.3} />
+      <HotPlate position={[-3.15, 0.895, -0.72]} />
+      <Clipboard position={[-2.85, 0.895, 1.45]} rotationY={-0.35} />
+      <Pipette position={[2.9, 0.905, 1.35]} />
+      <BenchFlask position={[3.15, 0.895, -0.65]} liquidColor="#dde9aa" />
+      <Notebook position={[2.1, 0.895, -0.95]} rotationY={-0.25} />
+
+      {/* ── Students at benches (safety goggles + lab coats) ── */}
+      <LabPerson
+        position={[0.18, 0, 0.82]}
+        rotationY={Math.PI}
+        skinTone="#e8c4b0"
+        hairDark={false}
+      />
+      <LabPerson
+        position={[-2.38, 0, 0.4]}
+        rotationY={Math.PI}
+        skinTone="#c99e86"
+        coatColor="#eef1f8"
+        hairDark
+      />
+      <LabPerson
+        position={[2.4, 0, 0.38]}
+        rotationY={Math.PI}
+        skinTone="#9d7b65"
+        pantsColor="#243040"
+        hairDark
+      />
+      <LabPerson
+        position={[-1.1, 0, -2.15]}
+        rotationY={0.55}
+        skinTone="#deb8a0"
+        coatColor="#f6f8fc"
+      />
+
       {/* ── Periodic table poster on back wall ── */}
       <group position={[0, 1.85, -roomD / 2 + 0.01]}>
         <mesh position={[0, 0, -0.008]}>
@@ -705,25 +1032,24 @@ export default function LabEnvironment() {
         />
       </mesh>
 
-      {/* ── Whiteboard on side wall ── */}
-      <mesh
-        position={[roomW / 2 - 0.01, 1.5, -1]}
-        rotation={[0, -Math.PI / 2, 0]}
-      >
-        <planeGeometry args={[2.2, 1.2]} />
-        <meshStandardMaterial
-          color="#f8f8f8"
-          roughness={0.08}
-          metalness={0.02}
-        />
-      </mesh>
-      <mesh
-        position={[roomW / 2 - 0.015, 1.5, -1]}
-        rotation={[0, -Math.PI / 2, 0]}
-      >
-        <boxGeometry args={[2.28, 1.28, 0.03]} />
-        <meshStandardMaterial color="#666" metalness={0.3} roughness={0.5} />
-      </mesh>
+      {/* ── Whiteboard: one plane, inset from wall to prevent z-fighting with room mesh ── */}
+      <ChemWhiteboard position={[roomW / 2 - 0.045, 1.5, -1]} />
+
+      {/* ── Wall clock (decorative) ── */}
+      <group position={[roomW / 2 - 0.02, 2.15, 1.2]} rotation={[0, -Math.PI / 2, 0]}>
+        <mesh>
+          <circleGeometry args={[0.18, 32]} />
+          <meshStandardMaterial color="#f0f0f0" roughness={0.35} />
+        </mesh>
+        <mesh position={[0, 0, 0.008]}>
+          <boxGeometry args={[0.02, 0.09, 0.01]} />
+          <meshStandardMaterial color="#222" />
+        </mesh>
+        <mesh position={[0.04, 0.04, 0.008]} rotation={[0, 0, -Math.PI / 4]}>
+          <boxGeometry args={[0.015, 0.06, 0.01]} />
+          <meshStandardMaterial color="#222" />
+        </mesh>
+      </group>
     </>
   );
 }
