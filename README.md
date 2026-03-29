@@ -1,4 +1,4 @@
-# Emersa — AI Calculus 3 Tutor
+# Immersa — AI Calculus 3 Tutor
 
 An interactive AI-powered platform that teaches Calculus 3 concepts through synchronized explanation, interactive 3D visuals, and voice-based follow-up questions.
 

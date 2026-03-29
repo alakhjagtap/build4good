@@ -33,7 +33,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    "../../../.cimmersa-next/types/**/*.ts"
+    "../../../.immersa-next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
